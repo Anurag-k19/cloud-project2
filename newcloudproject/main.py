@@ -32,7 +32,7 @@ def signup(username, password, email):
     cursor = conn.cursor()
     
     # Check if user already registered
-    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,email))
     if cursor.fetchone():
         st.warning("Username already taken.")
         return False
@@ -51,7 +51,7 @@ def login(username, password):
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    cursor.execute("SELECT password_hash FROM users WHERE username = %s", (username,))
+    cursor.execute("SELECT password_hash FROM users WHERE username = %s", (username,password))
     result = cursor.fetchone()
     
     if result:
