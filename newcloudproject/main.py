@@ -18,31 +18,30 @@ st.markdown(
         background: #020205;
         color: #ecf0f1;
         font-family: 'Open Sans', sans-serif;
+        height:100%;
+        width:100%;
     }
     .stApp {
         background-color: #020205;
         color: #ecf0f1;
         font-family: 'Open Sans', sans-serif;
+        height:100%;
+        width:100%;
     }
-    .css-1d391kg { /* Sidebar container */
-        background-color: #020205 !important;
-    }
-    .css-1e5imcs { /* Sidebar title and text color */
-        color: #f5d061 !important;
-    }
+    
     h1 {
         text-align: center;
         color: #f5d061;
         font-family: 'Arial', sans-serif;
         text-shadow: 2px 2px 5px black;
         font-size: 40px;
+        width:100%;
     }
-    textarea {
-        background-color: #1e1e1e;
-        color: #dcdcdc;
-        width: 100%;
-        height: 100%;
+    textarea:focus {
+        border-color: #87002f;         
+        outline: none;                 
     }
+    
     .stButton > button {
         background-color: #a80038; 
         color: white; 
@@ -83,7 +82,7 @@ sidebar = st.sidebar
 sidebar.title("Previous Searches")
 
 selected_search = sidebar.selectbox(
-    "Click to populate a previous search:",
+    "Click to see previous searches:",
     options=[""] + st.session_state.previous_searches,
     index=0,
 )
@@ -95,7 +94,7 @@ if selected_search and selected_search != st.session_state.current_input:
 user_input = st.text_area(
     "Enter your code snippet or prompt here:",
     value=st.session_state.current_input,
-    height=300,
+    height =235,
     key="user_input_area",
 )
 
