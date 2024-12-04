@@ -32,7 +32,7 @@ def signup(username, password, email):
     cursor = conn.cursor()
     
     # Check if user already registered
-    cursor.execute("SELECT * FROM users WHERE username = %s", (username))
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
     if cursor.fetchone():
         st.warning("Username already taken.")
         return False
