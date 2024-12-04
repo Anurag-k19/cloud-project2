@@ -32,7 +32,7 @@ def signup(username, password, email):
     cursor = conn.cursor()
     
     # Check if user already registered
-    cursor.execute("SELECT * FROM users WHERE username = %s", (username,email))
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username))
     if cursor.fetchone():
         st.warning("Username already taken.")
         return False
@@ -48,14 +48,18 @@ def signup(username, password, email):
 
 # Login 
 def login(username, password):
+ def login(username, password):
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    cursor.execute("SELECT password_hash FROM users WHERE username = %s", (username,password))
+
+    cursor.execute("SELECT password_hash FROM users WHERE username = %s", (username,))
     result = cursor.fetchone()
     
     if result:
         stored_hash = result[0]
+        
+     
         if check_password(stored_hash, password):
             st.success("Login successful!")
             return True
@@ -68,6 +72,8 @@ def login(username, password):
     
     cursor.close()
     conn.close()
+
+
 
 # Custom CSS for styling the app
 st.markdown(
