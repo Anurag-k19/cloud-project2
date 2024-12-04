@@ -1,19 +1,83 @@
 import os
 from dotenv import load_dotenv
 import streamlit as st
+from psycopg2 import connect
+import bcrypt
 from groq import Groq
 
 load_dotenv()
 
+
 api_key = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=api_key)
 
-# Custom CSS for styling the app
+# Database Connection
+host = os.getenv("DB_HOST")
+database = os.getenv("DB_DATABASE")
+username = os.getenv("DB_USERNAME")
+password = os.getenv("DB_PASSWORD")
+conn_str = f"dbname={database} user={username} password={password} host={host}"
+
+
+def get_db_connection():
+    return connect(conn_str)
+
+
+def hash_password(password):
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+def check_password(stored_hash, password):
+    return bcrypt.checkpw(password.encode('utf-8'), stored_hash)
+
+# Signup 
+def signup(username, password, email):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    #to check if user already registered
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+    if cursor.fetchone():
+        st.warning("Username already taken.")
+        return False
+    
+    
+    password_hash = hash_password(password)
+    cursor.execute("INSERT INTO users (username, password_hash, email) VALUES (%s, %s, %s)",
+                   (username, password_hash, email))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    st.success("Signup successful!")
+    return True
+
+# Login 
+def login(username, password):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT password_hash FROM users WHERE username = %s", (username,))
+    result = cursor.fetchone()
+    
+    if result:
+        stored_hash = result[0]
+        if check_password(stored_hash, password):
+            st.success("Login successful!")
+            return True
+        else:
+            st.warning("Incorrect password.")
+            return False
+    else:
+        st.warning("User not found.")
+        return False
+    
+    cursor.close()
+    conn.close()
+
+
 st.markdown(
     """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&family=Open+Sans:wght@300;400;600&display=swap');
-
     body {
         background: #020205;
         color: #ecf0f1;
@@ -28,7 +92,6 @@ st.markdown(
         height:100%;
         width:100%;
     }
-    
     h1 {
         text-align: center;
         color: #f5d061;
@@ -38,19 +101,18 @@ st.markdown(
         width:100%;
     }
     textarea:focus {
-        border-color: #87002f;         
-        outline: none;                 
+        border-color: #87002f;
+        outline: none;
     }
-    
     .stButton > button {
-        background-color: #a80038; 
-        color: white; 
+        background-color: #a80038;
+        color: white;
         border: none;
         border-radius: 5px;
         width: 18%;
     }
     .stButton > button:hover {
-        background-color: #87002f; 
+        background-color: #87002f;
         color: white;
     }
     .footer {
@@ -71,13 +133,13 @@ st.markdown(
 
 st.markdown("<h1>Code Explanation and Debugging Assistant</h1>", unsafe_allow_html=True)
 
-# Initialize session state for previous searches and current input
+
 if "previous_searches" not in st.session_state:
     st.session_state.previous_searches = []
 if "current_input" not in st.session_state:
     st.session_state.current_input = ""
 
-# Sidebar for displaying and selecting previous searches
+#sidebar
 sidebar = st.sidebar
 sidebar.title("Previous Searches")
 
@@ -90,15 +152,15 @@ selected_search = sidebar.selectbox(
 if selected_search and selected_search != st.session_state.current_input:
     st.session_state.current_input = selected_search
 
-# Text area for input
+# Text area
 user_input = st.text_area(
     "Enter your code snippet or prompt here:",
     value=st.session_state.current_input,
-    height =235,
+    height=235,
     key="user_input_area",
 )
 
-# Buttons positioned above and below the text area
+# Buttons 
 if st.button("Explain Code"):
     if user_input:
         st.session_state.previous_searches.append(user_input)
@@ -143,7 +205,31 @@ if st.button("Debug Code"):
     else:
         st.warning("Please enter a code snippet or prompt.")
 
-# Footer
+# User Authentication 
+page = st.radio("Choose an option", ("Login", "Signup"))
+
+if page == "Signup":
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    email = st.text_input("Email")
+    
+    if st.button("Sign Up"):
+        if username and password and email:
+            signup(username, password, email)
+        else:
+            st.warning("Please fill out all fields.")
+
+elif page == "Login":
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    
+    if st.button("Log In"):
+        if username and password:
+            login(username, password)
+        else:
+            st.warning("Please fill out all fields.")
+
+
 st.markdown(
     """
     <div class="footer">
